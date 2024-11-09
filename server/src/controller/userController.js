@@ -1,11 +1,10 @@
 const createError = require("http-errors");
-const users = require("../module/userModule");
 
 const getUser = (req, res, next) => {
   try {
     res.status(200).send({
       status: true,
-      message: "User retrieved successfully",
+      message: "User returned successfully",
       users: users,
     });
   } catch (error) {

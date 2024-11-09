@@ -3,8 +3,9 @@ const morgan = require("morgan");
 const bodyParser = require("body-parser");
 const createError = require("http-errors");
 const xssClean = require("xss-clean");
-var rateLimit = require("express-rate-limit");
+const rateLimit = require("express-rate-limit");
 const userRouter = require("./routers/userRouter");
+const seedUserRouter = require("./routers/seedUserRouter");
 
 const app = express();
 
@@ -23,9 +24,17 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 app.use("/api/user", userRouter);
+app.use("/api/seed", seedUserRouter);
 
+// Get home page routes
+app.get("/", (req, res) => {
+  res.json({
+    status: 200,
+    message: "Welcome to backend server!",
+  });
+});
 // user middleware to parse incoming
-const isLoggedIn = (req, res, next) => {
+/* const isLoggedIn = (req, res, next) => {
   const isLoggedIn = false;
   if (isLoggedIn) {
     // verify token here
@@ -33,7 +42,7 @@ const isLoggedIn = (req, res, next) => {
   } else {
     res.status(401).json({ message: "Unauthorized" });
   }
-};
+}; */
 
 // route error handling middleware
 app.use((req, res, next) => {

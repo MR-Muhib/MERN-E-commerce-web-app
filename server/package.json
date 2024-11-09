@@ -17,6 +17,7 @@
     "express": "^4.21.1",
     "express-rate-limit": "^7.4.1",
     "http-errors": "^2.0.0",
+    "mongoose": "^8.8.1",
     "xss-clean": "^0.1.4"
   },
   "devDependencies": {

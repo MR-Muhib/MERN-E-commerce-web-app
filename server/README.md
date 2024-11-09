@@ -21,3 +21,9 @@
 ## 11. Environment variable & .gitignore → dotenv package
 
 ## 12. MVC Architecture →
+
+## 13. connect to Mongodb Database → mongoose package →
+
+## 14. Schema and models for users
+
+## 15. Create seed router for testing
