@@ -1,0 +1,7 @@
+const users = [
+  { id: 1, name: "John Doe", email: "johndoe@example.com" },
+  { id: 2, name: "Jane Smith", email: "janesmith@example.com" },
+  { id: 3, name: "Alice Johnson", email: "alicejohnson@example.com" },
+];
+
+module.exports = users;
