@@ -28,6 +28,12 @@
 
 ## 15. Create seed router for testing
 
-## 16. get/api/users → admin → getAllUsers → searchByName → pagination functionality
+## 16. GET/api/users → admin → getAllUsers → searchByName → pagination functionality
 
-## 17. responseHandler controller fo error or success
+## 17. responseController controller fo error or success
+
+## 18. GET api/user/:id → get a single user by id
+
+## 19. How to create SERVICES in the backend
+
+## 20. DELETE api/user/:id → delete a single user by id
