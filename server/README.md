@@ -27,3 +27,7 @@
 ## 14. Schema and models for users
 
 ## 15. Create seed router for testing
+
+## 16. get/api/users → admin → getAllUsers → searchByName → pagination functionality
+
+## 17. responseHandler controller fo error or success
