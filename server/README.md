@@ -37,3 +37,21 @@
 ## 19. How to create SERVICES in the backend
 
 ## 20. DELETE api/user/:id → delete a single user by id
+
+## 21. Refactoring, Reusability dynamic
+
+## 22. DELETED Image Helper
+
+## 23. POST api/user/register → Proses the registration
+
+## 24. POST api/user/verify → Verify then store information database
+
+## 24.1 Create JWT → install jsonwebtoken package
+
+## 24.2 Create JWT → install Nodemailer package → using SMTP mail transport
+
+## https://security.google.com/settings/security/apppasswords → creating SMTP mail transport password:- vfuf pcls dfoc qyze
+
+## 25. Setup smtp server and prepare email
+
+## 26. send email with nodemailer package

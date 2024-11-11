@@ -1,4 +1,7 @@
 const { Schema, model } = require("mongoose");
+
+const bcrypt = require("bcryptjs");
+
 const { defaultImagePath } = require("../secret");
 
 const userShema = new Schema(

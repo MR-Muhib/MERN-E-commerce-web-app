@@ -4,6 +4,10 @@ const fs = require("fs");
 const users = require("../module/userModule");
 const { successResponse } = require("./responsController");
 const { findWithId } = require("../services/findItem");
+const { deleteImage } = require("../helper/deleteImage");
+const { createJSONWebToken } = require("../helper/jsonWebToken");
+const { jwtActivationKye } = require("../secret");
+const { sendVerificationNodeMail } = require("../helper/email");
 
 // Get all users except admin.
 const getUser = async (req, res, next) => {
@@ -72,7 +76,7 @@ const getSingleUser = async (req, res, next) => {
     // password not returned from search
     const option = { password: 0 };
 
-    const user = await findWithId(userId, option, next);
+    const user = await findWithId(users, userId, option, next);
 
     // Return the user with pagination and search results. controlled responsContoler.js
     return successResponse(res, {
@@ -93,16 +97,10 @@ const deleteSingleUser = async (req, res, next) => {
     const userId = req.params.id;
     const option = { password: 0 };
 
-    const user = await findWithId(userId, option, next);
-
+    const user = await findWithId(users, userId, option);
     const userImagePath = user.image;
 
-    fs.access(userImagePath, (error) => {
-      if (error) {
-        return next(createError(400, "Invalid user image"));
-      }
-      fs.unlinkSync(userImagePath);
-    });
+    deleteImage(userImagePath);
 
     await users.findByIdAndDelete({
       _id: userId,
@@ -113,7 +111,57 @@ const deleteSingleUser = async (req, res, next) => {
     return successResponse(res, {
       statusCode: 200,
       message: "User Delete successfully",
-      payload: {},
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// GET single user profile
+const prosesRegister = async (req, res, next) => {
+  try {
+    const { name, email, password, phone, address, image } = req.body;
+
+    const userExists = await users.exists({ email: email });
+    if (userExists) {
+      throw createError(409, "Email already registered, please logged in");
+    }
+
+    // Json web token
+    const token = createJSONWebToken(
+      { name, email, password, phone, address, image },
+      jwtActivationKye,
+      "10m"
+    );
+
+    // Prepare Email Address
+    const verificationToken = {
+      from: name,
+      to: email,
+      subject: "Registration Confirmation",
+      text: `
+        Please click on the link below to confirm your registration:
+        http://localhost:3000/api/auth/activate/${token}
+      `,
+    };
+
+    // send email with nodeMailer
+    try {
+      await sendVerificationNodeMail(verificationToken);
+    } catch (error) {
+      throw createError(500, "Failed to send email verification");
+    }
+
+    // save tokens database
+    const savedUser = await users.create({ ...req.body, token });
+
+    return successResponse(res, {
+      statusCode: 200,
+      message: "Please go to your email and verify your registration",
+      payload: {
+        // savedUser: savedUser,
+        token, // Return the user from the database.
+      },
     });
   } catch (error) {
     next(error);
@@ -124,4 +172,5 @@ module.exports = {
   getUser,
   getSingleUser,
   deleteSingleUser,
+  prosesRegister,
 };
