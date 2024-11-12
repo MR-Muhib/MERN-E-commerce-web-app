@@ -12,6 +12,7 @@ const jwtActivationKye =
 
 const smtpUserName = process.env.SMTP_USERNAME || "";
 const smtpPassword = process.env.SMTP_PASSWORD || "";
+const smtpClientUrl = process.env.CLIENT_URL || "";
 
 // export default
 module.exports = {
@@ -21,4 +22,5 @@ module.exports = {
   jwtActivationKye,
   smtpUserName,
   smtpPassword,
+  smtpClientUrl,
 };

@@ -11,20 +11,20 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-const sendVerificationNodeMail = async (verificationToken) => {
+const emailWithNodeMailer = async (emailData) => {
   try {
     const mailOptions = {
       from: `"E-commerce App" <${smtpUserName}>`,
-      to: verificationToken.email,
+      to: emailData.email,
       subject: "E-commerce App - Verify Your Email",
-      text: verificationToken.text,
+      html: emailData.html,
     };
     const info = await transporter.sendMail(mailOptions);
-    console.log(`Message sent to ${info} with`);
+    console.log("Message sent: %s", info.response);
   } catch (error) {
-    console.error("Failed to send verification email: ", error.message);
+    console.error("Error sending email: ", error);
     throw error;
   }
 };
 
-module.exports = { sendVerificationNodeMail };
+module.exports = emailWithNodeMailer;

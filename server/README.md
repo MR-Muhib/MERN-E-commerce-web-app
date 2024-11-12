@@ -55,3 +55,5 @@
 ## 25. Setup smtp server and prepare email
 
 ## 26. send email with nodemailer package
+
+## 27. POST /api/auth/activate/token → Verify and register into database

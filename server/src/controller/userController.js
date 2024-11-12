@@ -1,4 +1,7 @@
 const createError = require("http-errors");
+const jwt = require("jsonwebtoken");
+// console.log(jwt);
+
 const fs = require("fs");
 
 const users = require("../module/userModule");
@@ -6,8 +9,8 @@ const { successResponse } = require("./responsController");
 const { findWithId } = require("../services/findItem");
 const { deleteImage } = require("../helper/deleteImage");
 const { createJSONWebToken } = require("../helper/jsonWebToken");
-const { jwtActivationKye } = require("../secret");
-const { sendVerificationNodeMail } = require("../helper/email");
+const { jwtActivationKye, smtpClientUrl } = require("../secret");
+const emailWithNodeMailer = require("../helper/email");
 
 // Get all users except admin.
 const getUser = async (req, res, next) => {
@@ -135,25 +138,26 @@ const prosesRegister = async (req, res, next) => {
     );
 
     // Prepare Email Address
-    const verificationToken = {
-      from: name,
-      to: email,
+    const emailData = {
+      email,
       subject: "Registration Confirmation",
-      text: `
-        Please click on the link below to confirm your registration:
-        http://localhost:3000/api/auth/activate/${token}
+      html: `
+      <h2>Hello ${name}!</h2>
+      <p>Please click the link below to confirm your registration:</p>
+      <a href="${smtpClientUrl}/api/auth/activate/${token}">Confirm Registration</a>
       `,
     };
 
     // send email with nodeMailer
     try {
-      await sendVerificationNodeMail(verificationToken);
-    } catch (error) {
-      throw createError(500, "Failed to send email verification");
+      await emailWithNodeMailer(emailData);
+    } catch (err) {
+      console.error("Failed to send email", err);
+      throw createError(500, "Failed to send email, please try again later");
     }
 
     // save tokens database
-    const savedUser = await users.create({ ...req.body, token });
+    // await users.create({ ...req.body, token });
 
     return successResponse(res, {
       statusCode: 200,
@@ -168,9 +172,57 @@ const prosesRegister = async (req, res, next) => {
   }
 };
 
+const activatedUserAccount = async (req, res, next) => {
+  try {
+    const token = req.body.token;
+    if (!token) {
+      throw createError(401, "Token is required");
+    }
+
+    try {
+      const decoded = jwt.verify(token, jwtActivationKye);
+      if (!decoded) {
+        throw createError(404, "Invalid or expired token");
+      }
+
+      // userExist
+      const userExists = await users.exists({ email: decoded.email });
+      if (userExists) {
+        console.warn(
+          `Attempted registration with existing email: ${decoded.email}`
+        );
+        throw createError(409, "User already exists! Please login instead.");
+      }
+      // create new user
+      await users.create(decoded);
+
+      return successResponse(res, {
+        statusCode: 201,
+        message: "Registration created successfully",
+      });
+    } catch (error) {
+      if (error.name === "TokenAlreadyExpired") {
+        throw createError(401, "Token is expired, please request again");
+      } else if (error.name === "JsonWebTokenAlreadyExpired") {
+        throw createError(401, "Invalid Token");
+      } else {
+        throw createError(
+          500,
+          "Failed to register user, please try again later"
+        );
+      }
+    }
+  } catch (error) {
+    next(error);
+  }
+};
+
+// activated User Account
+
 module.exports = {
   getUser,
   getSingleUser,
   deleteSingleUser,
   prosesRegister,
+  activatedUserAccount,
 };
