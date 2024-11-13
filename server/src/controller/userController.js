@@ -156,14 +156,10 @@ const prosesRegister = async (req, res, next) => {
       throw createError(500, "Failed to send email, please try again later");
     }
 
-    // save tokens database
-    // await users.create({ ...req.body, token });
-
     return successResponse(res, {
       statusCode: 200,
       message: "Please go to your email and verify your registration",
       payload: {
-        // savedUser: savedUser,
         token, // Return the user from the database.
       },
     });
@@ -175,43 +171,32 @@ const prosesRegister = async (req, res, next) => {
 const activatedUserAccount = async (req, res, next) => {
   try {
     const token = req.body.token;
+
     if (!token) {
       throw createError(401, "Token is required");
     }
 
-    try {
-      const decoded = jwt.verify(token, jwtActivationKye);
-      if (!decoded) {
-        throw createError(404, "Invalid or expired token");
-      }
-
-      // userExist
-      const userExists = await users.exists({ email: decoded.email });
-      if (userExists) {
-        console.warn(
-          `Attempted registration with existing email: ${decoded.email}`
-        );
-        throw createError(409, "User already exists! Please login instead.");
-      }
-      // create new user
-      await users.create(decoded);
-
-      return successResponse(res, {
-        statusCode: 201,
-        message: "Registration created successfully",
-      });
-    } catch (error) {
-      if (error.name === "TokenAlreadyExpired") {
-        throw createError(401, "Token is expired, please request again");
-      } else if (error.name === "JsonWebTokenAlreadyExpired") {
-        throw createError(401, "Invalid Token");
-      } else {
-        throw createError(
-          500,
-          "Failed to register user, please try again later"
-        );
-      }
+    const decoded = jwt.verify(token, jwtActivationKye);
+    // console.warn(decoded);
+    if (!decoded) {
+      throw createError(404, "Invalid or expired token");
     }
+
+    // userExist
+    const userExists = await users.exists({ email: decoded.email });
+    if (userExists) {
+      console.warn(
+        `Attempted registration with existing email: ${decoded.email}`
+      );
+      throw createError(409, "User already exists! Please login instead.");
+    }
+    // create new user
+    await users.create(decoded);
+
+    return successResponse(res, {
+      statusCode: 201,
+      message: "Registration created successfully",
+    });
   } catch (error) {
     next(error);
   }

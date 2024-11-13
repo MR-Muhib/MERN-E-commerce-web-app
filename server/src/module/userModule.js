@@ -40,12 +40,10 @@ const userShema = new Schema(
     },
     address: {
       type: String,
-      required: true,
       trim: true,
     },
     phone: {
       type: String,
-      required: true,
       match: [/^\+?1?\d{1,15}$/, "Please enter a valid phone number"],
       unique: true,
     },

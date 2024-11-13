@@ -1,4 +1,5 @@
 const nodemailer = require("nodemailer");
+
 const { smtpUserName, smtpPassword } = require("../secret");
 
 const transporter = nodemailer.createTransport({
@@ -12,6 +13,7 @@ const transporter = nodemailer.createTransport({
 });
 
 const emailWithNodeMailer = async (emailData) => {
+  // console.log(emailData);
   try {
     const mailOptions = {
       from: `"E-commerce App" <${smtpUserName}>`,

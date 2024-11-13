@@ -1,4 +1,6 @@
 const express = require("express");
+const userRouter = express.Router();
+
 const {
   getUser,
   getSingleUser,
@@ -7,10 +9,19 @@ const {
   activatedUserAccount,
 } = require("../controller/userController");
 
-const userRouter = express.Router();
+const upload = require("../middleware/uploadFile");
+const { validateUserRegistration } = require("../validetors/auth");
+const { runValidation } = require("../validetors");
 
-// home routes
-userRouter.post("/proses_register", prosesRegister);
+// users Registration format
+userRouter.post(
+  "/proses_register",
+  upload.single("image"),
+  validateUserRegistration,
+  runValidation,
+  prosesRegister
+);
+
 userRouter.post("/verify", activatedUserAccount);
 userRouter.get("/", getUser);
 userRouter.get("/:id", getSingleUser);
