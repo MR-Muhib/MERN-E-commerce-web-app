@@ -101,14 +101,16 @@ const deleteSingleUser = async (req, res, next) => {
     const option = { password: 0 };
 
     const user = await findWithId(users, userId, option);
-    const userImagePath = user.image;
-
-    deleteImage(userImagePath);
 
     await users.findByIdAndDelete({
       _id: userId,
       isAdmin: false,
     });
+
+    // delete image
+    if (user && user.image) {
+      await deleteImage(user.image);
+    }
 
     // Return the user with pagination and search results. controlled responsContoler.js
     return successResponse(res, {
@@ -123,7 +125,12 @@ const deleteSingleUser = async (req, res, next) => {
 // GET single user profile
 const prosesRegister = async (req, res, next) => {
   try {
-    const { name, email, password, phone, address, image } = req.body;
+    const { name, email, password, phone, address } = req.body;
+
+    const image = req.file.path;
+    if (image && image.size > 1024 * 1024 * 2) {
+      throw createError(400, "Image size should be less than 2MB");
+    }
 
     const userExists = await users.exists({ email: email });
     if (userExists) {
@@ -132,7 +139,7 @@ const prosesRegister = async (req, res, next) => {
 
     // Json web token
     const token = createJSONWebToken(
-      { name, email, password, phone, address, image },
+      { name, email, password, phone, address, image: image },
       jwtActivationKye,
       "10m"
     );
@@ -168,6 +175,7 @@ const prosesRegister = async (req, res, next) => {
   }
 };
 
+// Get user information and save the database
 const activatedUserAccount = async (req, res, next) => {
   try {
     const token = req.body.token;
@@ -202,6 +210,71 @@ const activatedUserAccount = async (req, res, next) => {
   }
 };
 
+// Update single user by id
+const updateSingleUserById = async (req, res, next) => {
+  try {
+    // debugger;
+    const userId = req.params.id;
+    const updateOption = { new: true, runValidator: true, context: "query" };
+
+    const options = { password: 0 };
+    const user = await findWithId(users, userId, options);
+
+    if (!user) {
+      throw createError(404, `${users.modelName} does not exist`);
+    }
+
+    const update = {};
+
+    // Update information users can access
+    for (const key in req.body) {
+      if (["name", "password", "phone", "address"].includes(key)) {
+        update[key] = req.body[key];
+      } else if (["email"].includes(key)) {
+        throw new Error("Email dose not updated");
+      }
+    }
+
+    // Update user image from existing
+    const image = req.file;
+    if (image) {
+      // Verify image size does not exceed 2MB
+      if (image.size > 1024 * 1024 * 2) {
+        throw createError(400, "Image size should not exceed 2MB");
+      }
+
+      // Assign new image to the update object
+      update.image = image.path;
+
+      // Optional: Delete the user's old image if it exists and is not the default
+      if (user.image && user.image !== "default.png") {
+        deleteImage(user.image);
+      }
+    }
+
+    const updatedUser = await users.findByIdAndUpdate(
+      userId,
+      update,
+      updateOption
+    );
+
+    if (!updatedUser) {
+      throw createError(404, `${users.modelName} does not exist`);
+    }
+
+    // Return the user with pagination and search results. controlled responsContoler.js
+    return successResponse(res, {
+      statusCode: 200,
+      message: "User Updated successfully",
+      payload: {
+        user: updatedUser, // Return the user from the database.
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // activated User Account
 
 module.exports = {
@@ -210,4 +283,5 @@ module.exports = {
   deleteSingleUser,
   prosesRegister,
   activatedUserAccount,
+  updateSingleUserById,
 };

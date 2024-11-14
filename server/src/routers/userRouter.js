@@ -7,6 +7,7 @@ const {
   deleteSingleUser,
   prosesRegister,
   activatedUserAccount,
+  updateSingleUserById,
 } = require("../controller/userController");
 
 const upload = require("../middleware/uploadFile");
@@ -22,9 +23,10 @@ userRouter.post(
   prosesRegister
 );
 
-userRouter.post("/verify", activatedUserAccount);
+userRouter.post("/activate", activatedUserAccount);
 userRouter.get("/", getUser);
 userRouter.get("/:id", getSingleUser);
 userRouter.delete("/:id", deleteSingleUser);
+userRouter.put("/:id", upload.single("image"), updateSingleUserById);
 
 module.exports = userRouter;

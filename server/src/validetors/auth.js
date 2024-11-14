@@ -35,7 +35,10 @@ const validateUserRegistration = [
     .notEmpty()
     .withMessage("Address is required, Please enter a valid Address"),
 
-  body("image").optional().isString(),
+  body("image")
+    .optional()
+    .isString()
+    .withMessage("User image is optional, Please optional"),
 ];
 
 module.exports = { validateUserRegistration };

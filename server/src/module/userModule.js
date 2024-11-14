@@ -16,7 +16,7 @@ const userShema = new Schema(
     },
     email: {
       type: String,
-      required: true,
+      required: [true, "User email is requiered"],
       unique: true,
       match: [
         /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
@@ -26,7 +26,7 @@ const userShema = new Schema(
     },
     password: {
       type: String,
-      required: true,
+      required: [true, "User password is requiered"],
       minlength: [8, "The password length must be at least 8 characters long"],
       select: false, // this field will not be returned when we fetch user data
       match: [
