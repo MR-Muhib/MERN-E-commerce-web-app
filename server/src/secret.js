@@ -10,6 +10,8 @@ const defaultImagePath =
 const jwtActivationKye =
   process.env.JWT_ACTIVATION_KYE || "jsdhfdfdjs54_5458df";
 
+const JWT_ACCESS_KYE = process.env.JWT_ACCESS_KYE || "JDSFJ_6DF$@DFSDFDS";
+
 const smtpUserName = process.env.SMTP_USERNAME || "";
 const smtpPassword = process.env.SMTP_PASSWORD || "";
 const smtpClientUrl = process.env.CLIENT_URL || "";
@@ -23,4 +25,5 @@ module.exports = {
   smtpUserName,
   smtpPassword,
   smtpClientUrl,
+  JWT_ACCESS_KYE,
 };

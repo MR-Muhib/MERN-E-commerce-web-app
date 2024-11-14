@@ -1,12 +1,14 @@
 const express = require("express");
 const morgan = require("morgan");
 const bodyParser = require("body-parser");
+const cookieParser = require("cookie-parser");
 const createError = require("http-errors");
 const xssClean = require("xss-clean");
 const rateLimit = require("express-rate-limit");
 const userRouter = require("./routers/userRouter");
 const seedUserRouter = require("./routers/seedUserRouter");
 const { errorResponse } = require("./controller/responsController");
+const authRouter = require("./routers/authRouter");
 
 const app = express();
 
@@ -24,8 +26,10 @@ app.use(morgan("dev"));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
+app.use(cookieParser());
 app.use("/api/seed", seedUserRouter); //testing server
 app.use("/api/user", userRouter);
+app.use("/api/auth", authRouter);
 
 // Get home page routes
 app.get("/", (req, res) => {
