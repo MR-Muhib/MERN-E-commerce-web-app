@@ -13,20 +13,27 @@ const {
 const upload = require("../middleware/uploadFile");
 const { validateUserRegistration } = require("../validetors/auth");
 const { runValidation } = require("../validetors");
+const { isLoggedIn, isLoggedOut, isAdmin } = require("../middleware/auth");
 
 // users Registration format
 userRouter.post(
   "/proses_register",
   upload.single("image"),
+  isLoggedOut,
   validateUserRegistration,
   runValidation,
   prosesRegister
 );
 
-userRouter.post("/activate", activatedUserAccount);
-userRouter.get("/", getUser);
-userRouter.get("/:id", getSingleUser);
-userRouter.delete("/:id", deleteSingleUser);
-userRouter.put("/:id", upload.single("image"), updateSingleUserById);
+userRouter.post("/activate", isLoggedOut, activatedUserAccount);
+userRouter.get("/", isLoggedIn, isAdmin, getUser);
+userRouter.get("/:id", isLoggedIn, getSingleUser);
+userRouter.delete("/:id", isLoggedIn, deleteSingleUser);
+userRouter.put(
+  "/:id",
+  upload.single("image"),
+  isLoggedIn,
+  updateSingleUserById
+);
 
 module.exports = userRouter;

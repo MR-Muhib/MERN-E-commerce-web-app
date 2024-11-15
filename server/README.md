@@ -68,6 +68,10 @@
 
 ## 32. PUT: api/user/:id → update a single user by id
 
-##
+## 33. POST: api/auth/login -> user login
 
-##
+## 34. POST: api/auth/logout -> user log
+
+## 35.Middleware isLogin isLogout isAdmin
+
+## 36. GET: api/auth/refresh -> refresh the token

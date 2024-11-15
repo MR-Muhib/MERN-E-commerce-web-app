@@ -74,6 +74,8 @@ const getUser = async (req, res, next) => {
 // GET single user profile
 const getSingleUser = async (req, res, next) => {
   try {
+    // console.warn("user id :-" + req.body.userId);
+    // console.warn(req.user);
     const userId = req.params.id;
 
     // password not returned from search

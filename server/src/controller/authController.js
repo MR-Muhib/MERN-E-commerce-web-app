@@ -8,6 +8,7 @@ const jwt = require("jsonwebtoken");
 const { successResponse } = require("./responsController");
 const { createJSONWebToken } = require("../helper/jsonWebToken");
 
+// User logging
 const handleLogin = async (req, res, next) => {
   try {
     // debugger;
@@ -36,11 +37,12 @@ const handleLogin = async (req, res, next) => {
 
     // token cookie
     const accessToken = createJSONWebToken(
-      { email },
+      { user },
       process.env.JWT_ACCESS_KYE,
-      "10m"
+      "15m"
     );
-    res.cookie("access_token", accessToken, {
+
+    res.cookie("accessToken", accessToken, {
       maxAge: 15 * 60 * 1000, //15 minutes
       httpOnly: true,
       // secure: true, // Only send cookie over HTTPS
@@ -48,6 +50,7 @@ const handleLogin = async (req, res, next) => {
       httpOnly: true,
     });
 
+    // console.warn(accessToken);
     // Find user by email
 
     // Compare the password with hashed password stored in the database
@@ -55,7 +58,7 @@ const handleLogin = async (req, res, next) => {
     // Send a successful response
     return successResponse(res, {
       statusCode: 200,
-      message: "Logged in successfully",
+      message: "Login successfully",
       payload: {
         user,
       },
@@ -66,4 +69,22 @@ const handleLogin = async (req, res, next) => {
   }
 };
 
-module.exports = handleLogin;
+// user logout
+const handleLogout = async (req, res, next) => {
+  try {
+    // Clear access token from the cookie
+    res.clearCookie("accessToken");
+
+    // Send a successful response
+    return successResponse(res, {
+      statusCode: 200,
+      message: "Logout successfully",
+      payload: {},
+    });
+  } catch (error) {
+    // Forward error to error-handling middleware
+    next(error);
+  }
+};
+
+module.exports = { handleLogin, handleLogout };

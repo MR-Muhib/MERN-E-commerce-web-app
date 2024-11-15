@@ -20,13 +20,13 @@ const rateLimiter = rateLimit({
 });
 
 // Middleware to parse incoming JSON requests
+app.use(cookieParser());
 app.use(rateLimiter);
 app.use(xssClean());
 app.use(morgan("dev"));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-app.use(cookieParser());
 app.use("/api/seed", seedUserRouter); //testing server
 app.use("/api/user", userRouter);
 app.use("/api/auth", authRouter);
