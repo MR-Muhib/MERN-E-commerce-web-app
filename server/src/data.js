@@ -7,6 +7,7 @@ const data = {
       password: "hEllo@2022",
       phone: "017212454",
       address: "Moluvibazar",
+      isAdmin: true,
     },
     {
       id: 2,
@@ -15,6 +16,7 @@ const data = {
       password: "World@2022",
       phone: "017212455",
       address: "Moluvibazar",
+      isAdmin: false,
     },
   ],
 };

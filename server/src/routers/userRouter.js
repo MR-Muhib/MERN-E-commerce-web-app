@@ -3,11 +3,12 @@ const userRouter = express.Router();
 
 const {
   getUser,
-  getSingleUser,
   deleteSingleUser,
   prosesRegister,
   activatedUserAccount,
   updateSingleUserById,
+  handleUserStatusById,
+  getSingleUserById,
 } = require("../controller/userController");
 
 const upload = require("../middleware/uploadFile");
@@ -27,7 +28,7 @@ userRouter.post(
 
 userRouter.post("/activate", isLoggedOut, activatedUserAccount);
 userRouter.get("/", isLoggedIn, isAdmin, getUser);
-userRouter.get("/:id", isLoggedIn, getSingleUser);
+userRouter.get("/:id", isLoggedIn, getSingleUserById);
 userRouter.delete("/:id", isLoggedIn, deleteSingleUser);
 userRouter.put(
   "/:id",
@@ -35,5 +36,8 @@ userRouter.put(
   isLoggedIn,
   updateSingleUserById
 );
+
+// user banned and unbanned status
+userRouter.put("/user-status/:id", isLoggedIn, isAdmin, handleUserStatusById);
 
 module.exports = userRouter;

@@ -75,3 +75,9 @@
 ## 35.Middleware isLogin isLogout isAdmin
 
 ## 36. GET: api/auth/refresh -> refresh the token
+
+## 37. PUT api/user/ban-user
+
+## 38. PUT api/user/unban-user
+
+## 39. Handle manage user ban and unban
