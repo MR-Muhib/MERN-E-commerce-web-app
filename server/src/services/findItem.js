@@ -4,7 +4,7 @@ const mongoose = require("mongoose");
 const findWithId = async (Model, userId, option = {}) => {
   try {
     // Find single user from database.
-    const item = await Model.findById(userId, option);
+    const item = await Model.findById(userId);
 
     // If there is no result found, return 404 Not Found.
     if (!item) {

@@ -9,6 +9,8 @@ const {
   updateSingleUserById,
   handleUserStatusById,
   getSingleUserById,
+  handleUpdatePassword,
+  handleResetPassword,
 } = require("../controller/userController");
 
 const upload = require("../middleware/uploadFile");
@@ -28,8 +30,8 @@ userRouter.post(
 
 userRouter.post("/activate", isLoggedOut, activatedUserAccount);
 userRouter.get("/", isLoggedIn, isAdmin, getUser);
-userRouter.get("/:id", isLoggedIn, getSingleUserById);
-userRouter.delete("/:id", isLoggedIn, deleteSingleUser);
+userRouter.get("/:id([0-9a-fA-F]{24})", isLoggedIn, getSingleUserById);
+userRouter.delete("/:id([0-9a-fA-F]{24})", isLoggedIn, deleteSingleUser);
 userRouter.put(
   "/:id",
   upload.single("image"),
@@ -38,6 +40,14 @@ userRouter.put(
 );
 
 // user banned and unbanned status
-userRouter.put("/user-status/:id", isLoggedIn, isAdmin, handleUserStatusById);
+userRouter.put(
+  "/user-status/:id([0-9a-fA-F]{24})",
+  isLoggedIn,
+  isAdmin,
+  handleUserStatusById
+);
+
+userRouter.put("/update-password/:id", isLoggedIn, handleUpdatePassword);
+userRouter.post("/reset-password", handleResetPassword);
 
 module.exports = userRouter;

@@ -1,3 +1,5 @@
+const { default: mongoose } = require("mongoose");
+const { deleteImage } = require("../helper/deleteImage");
 const users = require("../module/userModule");
 const { findWithId } = require("./findItem");
 const createError = require("http-errors");
@@ -62,6 +64,80 @@ const findUserById = async (userId, option) => {
 
     return user;
   } catch (error) {
+    if (error instanceof mongoose.Error.CastError) {
+      throw createError(400, "Invalid user id");
+    }
+    throw error;
+  }
+};
+
+// delete single user by id
+const handleDeleteUserById = async (userId, option) => {
+  try {
+    const user = await users.findByIdAndDelete({
+      _id: userId,
+      isAdmin: false,
+    });
+
+    // delete image
+    if (user && user.image) {
+      await deleteImage(user.image);
+    }
+  } catch (error) {
+    if (error instanceof mongoose.Error.CastError) {
+      throw createError(400, "Invalid user id");
+    }
+    throw error;
+  }
+};
+
+// update single user by id
+const updateUserById = async (userId, req) => {
+  try {
+    const user = await findUserById(userId);
+    const updateOption = { new: true, runValidator: true, context: "query" };
+    const update = {};
+
+    // Update information users can access
+    for (const key in req.body) {
+      if (["name", "password", "phone", "address"].includes(key)) {
+        update[key] = req.body[key];
+      } else if (["email"].includes(key)) {
+        throw new Error("Email dose not updated");
+      }
+    }
+
+    // Update user image from existing
+    const image = req.file;
+    if (image) {
+      // Verify image size does not exceed 2MB
+      if (image.size > 1024 * 1024 * 2) {
+        throw createError(400, "Image size should not exceed 2MB");
+      }
+
+      // Assign new image to the update object
+      update.image = image.path;
+
+      // Optional: Delete the user's old image if it exists and is not the default
+      if (user.image && user.image !== "default.png") {
+        deleteImage(user.image);
+      }
+    }
+
+    const updatedUser = await users.findByIdAndUpdate(
+      userId,
+      update,
+      updateOption
+    );
+
+    if (!updatedUser) {
+      throw createError(404, `${users.modelName} does not exist`);
+    }
+    return updatedUser;
+  } catch (error) {
+    if (error instanceof mongoose.Error.CastError) {
+      throw createError(400, "Invalid user id");
+    }
     throw error;
   }
 };
@@ -114,4 +190,6 @@ module.exports = {
   HandleUserAction,
   findUsers,
   findUserById,
+  handleDeleteUserById,
+  updateUserById,
 };

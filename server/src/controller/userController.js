@@ -1,6 +1,6 @@
 const createError = require("http-errors");
 const jwt = require("jsonwebtoken");
-// console.log(jwt);
+const bcrypt = require("bcrypt");
 
 const fs = require("fs");
 
@@ -9,12 +9,18 @@ const { successResponse } = require("./responsController");
 const { findWithId } = require("../services/findItem");
 const { deleteImage } = require("../helper/deleteImage");
 const { createJSONWebToken } = require("../helper/jsonWebToken");
-const { jwtActivationKye, smtpClientUrl } = require("../secret");
+const {
+  jwtActivationKye,
+  smtpClientUrl,
+  jwtResetPasswordKye,
+} = require("../secret");
 const emailWithNodeMailer = require("../helper/email");
 const {
   HandleUserAction,
   findUsers,
   findUserById,
+  handleDeleteUserById,
+  updateUserById,
 } = require("../services/userServices");
 
 // Get all users except admin.
@@ -65,20 +71,7 @@ const deleteSingleUser = async (req, res, next) => {
   try {
     const userId = req.params.id;
     const option = { password: 0 };
-
-    const user = await findWithId(users, userId, option);
-
-    await users.findByIdAndDelete({
-      _id: userId,
-      isAdmin: false,
-    });
-
-    // delete image
-    if (user && user.image) {
-      await deleteImage(user.image);
-    }
-
-    // Return the user with pagination and search results. controlled responsContoler.js
+    await handleDeleteUserById(userId, option);
     return successResponse(res, {
       statusCode: 200,
       message: "User Delete successfully",
@@ -181,54 +174,12 @@ const updateSingleUserById = async (req, res, next) => {
   try {
     // debugger;
     const userId = req.params.id;
-    const updateOption = { new: true, runValidator: true, context: "query" };
-
     const options = { password: 0 };
-    const user = await findWithId(users, userId, options);
-
-    if (!user) {
-      throw createError(404, `${users.modelName} does not exist`);
-    }
-
-    const update = {};
-
-    // Update information users can access
-    for (const key in req.body) {
-      if (["name", "password", "phone", "address"].includes(key)) {
-        update[key] = req.body[key];
-      } else if (["email"].includes(key)) {
-        throw new Error("Email dose not updated");
-      }
-    }
-
-    // Update user image from existing
-    const image = req.file;
-    if (image) {
-      // Verify image size does not exceed 2MB
-      if (image.size > 1024 * 1024 * 2) {
-        throw createError(400, "Image size should not exceed 2MB");
-      }
-
-      // Assign new image to the update object
-      update.image = image.path;
-
-      // Optional: Delete the user's old image if it exists and is not the default
-      if (user.image && user.image !== "default.png") {
-        deleteImage(user.image);
-      }
-    }
-
-    const updatedUser = await users.findByIdAndUpdate(
-      userId,
-      update,
-      updateOption
-    );
-
+    const updatedUser = await updateUserById(userId, req, options);
     if (!updatedUser) {
       throw createError(404, `${users.modelName} does not exist`);
     }
 
-    // Return the user with pagination and search results. controlled responsContoler.js
     return successResponse(res, {
       statusCode: 200,
       message: "User Updated successfully",
@@ -259,6 +210,99 @@ const handleUserStatusById = async (req, res, next) => {
   }
 };
 
+// Update password user
+const handleUpdatePassword = async (req, res, next) => {
+  try {
+    // debugger;
+    const userId = req.params.id;
+    const { oldPassword, newPassword, confirmPassword, email } = req.body;
+    const user = await users.findOne({ email: email }).select("+password");
+
+    if (!user) {
+      throw new createError(401, "Invalid email or password");
+    }
+
+    // compare password
+    if (oldPassword !== user.password) {
+      throw new createError(401, "email and password do not match");
+    }
+    // compare new password and confirm password
+    if (newPassword !== confirmPassword) {
+      throw new createError(400, "Passwords do not match");
+    }
+
+    user.password = newPassword;
+    await user.save();
+
+    // update password by id
+    const updateUser = await users.findByIdAndUpdate(userId, {
+      userId,
+      email,
+      newPassword,
+      oldPassword,
+      confirmPassword,
+    });
+
+    return successResponse(res, {
+      statusCode: 200,
+      message: "Password updated successfully",
+      payload: {
+        user: updateUser,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Reset Password
+const handleResetPassword = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      throw new createError(400, "Email is required");
+    }
+
+    const user = await users.findOne({ email: email });
+
+    if (!user) {
+      throw new createError(404, "User does not exist in this email address");
+    }
+
+    // Json web token
+    const token = createJSONWebToken({ email }, jwtResetPasswordKye, "10m");
+
+    // Prepare Email Address
+    const emailData = {
+      email,
+      subject: "Reset Password",
+      html: `
+      <h2>Hello ${user.name}!</h2>
+      <p>Please click the link below to confirm your reset password:</p>
+      <a href="${smtpClientUrl}/api/user/reset-password/${token}">Confirm reset password</a>
+      `,
+    };
+
+    // send email with nodeMailer
+    try {
+      await emailWithNodeMailer(emailData);
+    } catch (err) {
+      console.error("Failed to send email", err);
+      throw createError(500, "Failed to send email, please try again later");
+    }
+
+    return successResponse(res, {
+      statusCode: 200,
+      message: "Please go to your email and reset your password",
+      payload: {
+        // token, // Return the user from the database.
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // activated User Account
 
 module.exports = {
@@ -269,4 +313,6 @@ module.exports = {
   activatedUserAccount,
   updateSingleUserById,
   handleUserStatusById, // ban and unban handle req.body
+  handleUpdatePassword, // update password handle req.body
+  handleResetPassword, // reset password handle req.body
 };

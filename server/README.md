@@ -81,3 +81,5 @@
 ## 38. PUT api/user/unban-user
 
 ## 39. Handle manage user ban and unban
+
+## 40. POST api/user/forgot password ->
