@@ -1,13 +1,8 @@
 const createError = require("http-errors");
 const jwt = require("jsonwebtoken");
-const bcrypt = require("bcrypt");
-
-const fs = require("fs");
 
 const users = require("../module/userModule");
 const { successResponse } = require("./responsController");
-const { findWithId } = require("../services/findItem");
-const { deleteImage } = require("../helper/deleteImage");
 const { createJSONWebToken } = require("../helper/jsonWebToken");
 const {
   jwtActivationKye,
@@ -21,6 +16,8 @@ const {
   findUserById,
   handleDeleteUserById,
   updateUserById,
+  forgetPassword,
+  resetPassword,
 } = require("../services/userServices");
 
 // Get all users except admin.
@@ -256,47 +253,32 @@ const handleUpdatePassword = async (req, res, next) => {
 };
 
 // Reset Password
-const handleResetPassword = async (req, res, next) => {
+const handleForgetPassword = async (req, res, next) => {
   try {
     const { email } = req.body;
-    if (!email) {
-      throw new createError(400, "Email is required");
-    }
-
-    const user = await users.findOne({ email: email });
-
-    if (!user) {
-      throw new createError(404, "User does not exist in this email address");
-    }
-
-    // Json web token
-    const token = createJSONWebToken({ email }, jwtResetPasswordKye, "10m");
-
-    // Prepare Email Address
-    const emailData = {
-      email,
-      subject: "Reset Password",
-      html: `
-      <h2>Hello ${user.name}!</h2>
-      <p>Please click the link below to confirm your reset password:</p>
-      <a href="${smtpClientUrl}/api/user/reset-password/${token}">Confirm reset password</a>
-      `,
-    };
-
-    // send email with nodeMailer
-    try {
-      await emailWithNodeMailer(emailData);
-    } catch (err) {
-      console.error("Failed to send email", err);
-      throw createError(500, "Failed to send email, please try again later");
-    }
+    const token = await forgetPassword(email);
 
     return successResponse(res, {
       statusCode: 200,
       message: "Please go to your email and reset your password",
       payload: {
-        // token, // Return the user from the database.
+        token, // Return the user from the database.
       },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const handleResetPassword = async (req, res, next) => {
+  try {
+    const { token, password } = req.body;
+    const user = await resetPassword(token, password);
+
+    return successResponse(res, {
+      statusCode: 200,
+      message: "Password reset successfully",
+      payload: { user },
     });
   } catch (error) {
     next(error);
@@ -314,5 +296,6 @@ module.exports = {
   updateSingleUserById,
   handleUserStatusById, // ban and unban handle req.body
   handleUpdatePassword, // update password handle req.body
+  handleForgetPassword, // reset password handle req.body
   handleResetPassword, // reset password handle req.body
 };

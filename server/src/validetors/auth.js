@@ -22,8 +22,7 @@ const validateUserRegistration = [
     .isLength({ min: 8, max: 20 })
     .matches(
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/
-    )
-    .withMessage("The email length must be between 6 and 20"),
+    ),
   body("phone")
     .trim()
     .notEmpty()
@@ -41,7 +40,25 @@ const validateUserRegistration = [
     .withMessage("User image is optional, Please optional"),
 ];
 
-module.exports = { validateUserRegistration };
+// validate reset password
+const validateResetPassword = [
+  body("token")
+    .trim()
+    .notEmpty()
+    .withMessage("Token is required, Please enter a valid Token"),
+  body("password")
+    .trim()
+    .notEmpty()
+    .withMessage(
+      "Password is required, At least one digit [0-9] At, least one lowercase character [a-z] At least one uppercase character [A-Z] At least one special character [*.! @#$%^&(){}[]:;<>,.?/~_+-=|] At least 8 characters in length, but no more than 20"
+    )
+    .isLength({ min: 8, max: 20 })
+    .matches(
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/
+    ),
+];
+
+module.exports = { validateUserRegistration, validateResetPassword };
 
 /* 
  body("confirmPassword")

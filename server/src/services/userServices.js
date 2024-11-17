@@ -4,6 +4,10 @@ const users = require("../module/userModule");
 const { findWithId } = require("./findItem");
 const createError = require("http-errors");
 const createHttpError = require("http-errors");
+const { createJSONWebToken } = require("../helper/jsonWebToken");
+const { smtpClientUrl, jwtResetPasswordKye } = require("../secret");
+const emailWithNodeMailer = require("../helper/email");
+const jwt = require("jsonwebtoken");
 
 const findUsers = async (search, page, limit) => {
   try {
@@ -142,6 +146,46 @@ const updateUserById = async (userId, req) => {
   }
 };
 
+// handle forget password by email
+const forgetPassword = async (email) => {
+  try {
+    if (!email) {
+      throw new createError(400, "Email is required");
+    }
+
+    const user = await users.findOne({ email: email });
+
+    if (!user) {
+      throw new createError(404, "User does not exist in this email address");
+    }
+
+    // Json web token
+    const token = createJSONWebToken({ email }, jwtResetPasswordKye, "10m");
+
+    // Prepare Email Address
+    const emailData = {
+      email,
+      subject: "Reset Password",
+      html: `
+      <h2>Hello ${user.name}!</h2>
+      <p>Please click the link below to confirm your reset password:</p>
+      <a href="${smtpClientUrl}/api/user/reset-password/${token}">Confirm reset password</a>
+      `,
+    };
+
+    // send email with nodeMailer
+    try {
+      await emailWithNodeMailer(emailData);
+    } catch (err) {
+      console.error("Failed to send email", err);
+      throw createError(500, "Failed to send email, please try again later");
+    }
+    return token;
+  } catch (error) {
+    throw error;
+  }
+};
+
 // Handle isBanned and unbanned users
 const HandleUserAction = async (userId, action) => {
   try {
@@ -186,10 +230,40 @@ const HandleUserAction = async (userId, action) => {
   }
 };
 
+// handle reset password by token
+const resetPassword = async (token, password) => {
+  try {
+    if (!token || !password) {
+      throw createError(400, "Token or Password is required");
+    }
+
+    const decoded = await jwt.verify(token, jwtResetPasswordKye);
+    if (!decoded) {
+      throw createError(401, "Invalid token or password");
+    }
+
+    // save password database
+    const user = await users.findOneAndUpdate(
+      { email: decoded.email },
+      { password: password },
+      { new: true }
+    );
+
+    if (!user) {
+      throw new createError(404, "User does not exist");
+    }
+    return user;
+  } catch (error) {
+    throw error;
+  }
+};
+
 module.exports = {
   HandleUserAction,
   findUsers,
   findUserById,
   handleDeleteUserById,
+  forgetPassword,
   updateUserById,
+  resetPassword,
 };

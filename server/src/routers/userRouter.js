@@ -10,11 +10,16 @@ const {
   handleUserStatusById,
   getSingleUserById,
   handleUpdatePassword,
+  handleForgetPassword,
   handleResetPassword,
 } = require("../controller/userController");
 
 const upload = require("../middleware/uploadFile");
-const { validateUserRegistration } = require("../validetors/auth");
+const {
+  validateUserRegistration,
+  // validateResetPassword,
+} = require("../validetors/auth");
+
 const { runValidation } = require("../validetors");
 const { isLoggedIn, isLoggedOut, isAdmin } = require("../middleware/auth");
 
@@ -32,6 +37,7 @@ userRouter.post("/activate", isLoggedOut, activatedUserAccount);
 userRouter.get("/", isLoggedIn, isAdmin, getUser);
 userRouter.get("/:id([0-9a-fA-F]{24})", isLoggedIn, getSingleUserById);
 userRouter.delete("/:id([0-9a-fA-F]{24})", isLoggedIn, deleteSingleUser);
+
 userRouter.put(
   "/:id",
   upload.single("image"),
@@ -48,6 +54,7 @@ userRouter.put(
 );
 
 userRouter.put("/update-password/:id", isLoggedIn, handleUpdatePassword);
-userRouter.post("/reset-password", handleResetPassword);
+userRouter.post("/forget-password", handleForgetPassword);
+userRouter.patch("/reset-password", handleResetPassword);
 
 module.exports = userRouter;
